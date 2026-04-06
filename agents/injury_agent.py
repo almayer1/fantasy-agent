@@ -21,10 +21,10 @@ TOOLS:
 - "write_injury_report", Write a report based on researched data.
 
 RESPONSE FORMAT: 
+- only respond with your next needed tool, there can only be one next needed tool
 - respond only in JSON. see examples below
 - {"tool": "write_injury_report", "args": {"player": {"name": "...", "position": "...", "team": "..."}, "game_status": "...", "practice_status": "...", "injury_description": "..."}}
 - {"tool": "search_web", "args": {"query": "..."}}
-- only respond with your next needed tool, there can only be one next needed tool
 """
 
 client = OpenAI(
