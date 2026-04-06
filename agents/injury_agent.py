@@ -3,27 +3,27 @@ from json_repair import repair_json
 import json
 
 from config import settings
-from models import Report, Action, AgentState
-from tools import TOOLS
+from models import InjuryAgentState, InjuryReport, Player, Action
+import tools
 from exceptions import IterationLimitReached
 
 SYSTEM_PROMPT = """
-BACKGROUND: You are a News Analyst. You evaluate all perspectives based on evidence, not assumption. When given a topic you research the topic using the 'search web' tool. Keep searching the web until you feel you have sufficient data then write a report 
+BACKGROUND: You are a Injury Researcher. Given a player you research their recent injury news, so the user knows whether to start the player or not
 
 RULES:
-- only use URLs from collected data as sources
-- represent each perspective accurately based on the weight of evidence behind it 
-- search with diverse angles and opposing viewpoints, not just different queries on the same angle.
+- Search at least 3 times
+- Verify info is accurate and recent
+- Search for game status and practice status separately
+- If no injury news found, report as healthy and leave injury_description blank
 
 TOOLS:
-- "search_web", Allows you to search the web
-    - {"tool": "search_web", "args": {"query": "..."}}
-- "write_injury_report", Write a report based on researched data
-    - {"tool": "write_report", "args": {"goal": "...", "perspectives": [{"name": "...", "summary": "..."}, ...], "conclusion": "...", "sources": [{"url": "...", "title": "..."}, ...]}}
+- "search_web", Allows you to search the web.
+- "write_injury_report", Write a report based on researched data.
 
-RESPONSE: 
-- respond only in JSON
-- response format: {"tool": tool_name, "args": arguments} 
+RESPONSE FORMAT: 
+- respond only in JSON. see examples below
+- {"tool": "write_injury_report", "args": {"player": {"name": "...", "position": "...", "team": "..."}, "game_status": "...", "practice_status": "...", "injury_description": "..."}}
+- {"tool": "search_web", "args": {"query": "..."}}
 - only respond with your next needed tool, there can only be one next needed tool
 """
 
@@ -32,11 +32,11 @@ client = OpenAI(
     api_key=settings.llm_api_key
 )
 
-def run(goal: str) -> Report:
-    state = AgentState(
-        goal=goal,
+def run(player) -> InjuryReport:
+    state = InjuryAgentState(
+        player=player,
         history=[],
-        iteration=0,
+        iteration=0
     )
     # while not done and iteration are less than 10
     while not state.done and state.iteration < settings.max_iterations:
@@ -52,17 +52,17 @@ def run(goal: str) -> Report:
         state.iteration += 1
 
         #Observe
-        if action.tool == "write_report":
+        if action.tool == "write_injury_report":
             return result
         elif action.tool == "search_web": 
             state.history.append(result)
 
     raise IterationLimitReached("Agent exceeded max iterations without writing a report")
 
-def think(state: AgentState) -> Action:
+def think(state: InjuryAgentState) -> Action:
     messages=[
         {"role": "system", "content": SYSTEM_PROMPT}, 
-        {"role": "user", "content": f"Goal: {state.goal}"}
+        {"role": "user", "content": f"{json.dumps(state.player.model_dump())}"}
     ]
 
     # History
@@ -95,3 +95,16 @@ def think(state: AgentState) -> Action:
                 continue  
 
     raise ValueError(f"LLM returned invalid response: {e}")
+
+def write_injury_report(player: Player, game_status: str, practice_status: str, injury_description: str) -> InjuryReport:
+    return InjuryReport(
+        player=player,
+        game_status=game_status,
+        practice_status=practice_status,
+        injury_description=injury_description
+    )
+
+TOOLS = {
+    **tools.TOOLS,
+    "write_injury_report": write_injury_report
+}

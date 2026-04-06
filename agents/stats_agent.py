@@ -4,7 +4,7 @@ import json
 
 
 from config import settings
-from models import PlayerRecommendation, Stats
+from models import Player, PlayerRecommendation, Stats
 from exceptions import NoPlayer, NoResponse
 from api.sleeper import get_player, get_player_stats
 
@@ -32,9 +32,8 @@ SYSTEM_PROMPT = """
     - {"player": {"name": "...", "position": "...", "team": "...", "player_id": ...}, "confidence_score": 1.0 - 10.0, "reasoning": "..."}
 """
 
-def run(name: str) -> PlayerRecommendation:
+def run(player: Player) -> PlayerRecommendation:
     # Get Player object
-    player = get_player(name)
     if player is None:
         raise NoPlayer("Couldn't find player. Try entering a different name")
 
