@@ -56,7 +56,7 @@ class PlayerRecommendation(BaseModel):
     player: Player
     confidence_score: float
     reasoning: str
-    start: bool = True
+    start: bool = False
 
 class LineupReport(BaseModel):
     players: list[PlayerRecommendation]
@@ -69,3 +69,13 @@ class WeeklyResult(LineupReport):
 # FastAPI
 class RequestOptimization(BaseModel):
     players: list[Player]
+
+class Result(BaseModel):
+    url: str
+    title: str
+    content: str
+
+class SearchResult(BaseModel):
+    query: str
+    results: list[Result]
+
