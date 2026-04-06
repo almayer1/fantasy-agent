@@ -23,3 +23,7 @@ def search_web(query: str) -> SearchResult:
         query=query,
         results=results
     )
+
+TOOLS = {
+    "search_web": search_web
+}
