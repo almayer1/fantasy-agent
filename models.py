@@ -37,11 +37,11 @@ class Props(BaseModel):
     tds: int
     fantasy_points: float
 
-class Injury(BaseModel):
+class InjuryReport(BaseModel):
     player: Player
     game_status: str
     practice_status: str
-    injury_type: str | None = None
+    injury_description: str | None = None
 
 class Matchup(BaseModel):
     player: Player
@@ -79,3 +79,12 @@ class SearchResult(BaseModel):
     query: str
     results: list[Result]
 
+class InjuryAgentState(BaseModel):
+    player: Player
+    history: list[SearchResult]
+    iteration: int
+    done: bool = False
+
+class Action(BaseModel):
+    tool: str
+    args: dict
